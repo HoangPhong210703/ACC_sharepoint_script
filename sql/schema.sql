@@ -1,69 +1,69 @@
--- All columns are text because ingest.py reads everything as strings.
--- Tighten to date/int/numeric later once the data quality is known.
--- Quoted identifiers are required because column names contain spaces and
--- non-ASCII (Vietnamese) characters.
+-- Reference schema for the 3 consolidated tables created by ingest.py.
+-- ingest.py creates these tables on demand (CREATE TABLE IF NOT EXISTS) and
+-- ingests each Excel file as a snapshot, identified by "Source.Name".
+-- Re-running a file replaces only that file's rows (DELETE WHERE Source.Name = ...).
+-- This file is documentation; you do not need to run it before ingest.py.
+-- Quoted identifiers are required because column names contain spaces,
+-- non-ASCII (Vietnamese) characters, dots, and slashes.
 
 -- =========================================================================
--- Data exp tables (one per file)
+-- data_exp — expense transactions, one row per ledger line per month snapshot
 -- =========================================================================
 
-DROP TABLE IF EXISTS data_2026_jan_exp;
-DROP TABLE IF EXISTS data_2026_feb_exp;
-DROP TABLE IF EXISTS data_2026_mar_exp;
-
-CREATE TABLE data_2026_jan_exp (
+CREATE TABLE IF NOT EXISTS data_exp (
+    "Source.Name"        text,
     "Ngày hạch toán"     text,
-    "Report Day"         text,
-    "Report Month"       text,
-    "Report Year"        text,
     "Ngày chứng từ"      text,
     "Số chứng từ"        text,
     "Diễn giải"          text,
     "Tài khoản"          text,
     "TK đối ứng"         text,
-    "Phát sinh Nợ (ROW)" text,
-    "Phát sinh Có (ROW)" text,
-    "Dư Nợ"              text,
-    "Dư Có"              text,
-    "Phát sinh Nợ"       text,
-    "Phát sinh Có"       text,
+    "Phát sinh Nợ (ROW)" numeric,
+    "Phát sinh Có (ROW)" numeric,
+    "Dư Nợ"              numeric,
+    "Dư Có"              numeric,
+    "Phát sinh Nợ"       numeric,
+    "Phát sinh Có"       numeric,
     "BU"                 text,
     "Cost center"        text,
-    "Cost items"         text
+    "Cost items"         text,
+    "Report Year"        int,
+    "Report Month"       int,
+    "Report Month Name"  text,
+    "Software/JSV"       text
 );
-CREATE TABLE data_2026_feb_exp (LIKE data_2026_jan_exp INCLUDING ALL);
-CREATE TABLE data_2026_mar_exp (LIKE data_2026_jan_exp INCLUDING ALL);
+CREATE INDEX IF NOT EXISTS data_exp_source_name_idx ON data_exp ("Source.Name");
 
 -- =========================================================================
--- Data Rev tables (one per file)
+-- data_rev — revenue by BU x month, one row per BU-month per snapshot
 -- =========================================================================
 
-DROP TABLE IF EXISTS data_2026_jan_rev;
-DROP TABLE IF EXISTS data_2026_feb_rev;
-DROP TABLE IF EXISTS data_2026_mar_rev;
-
-CREATE TABLE data_2026_jan_rev (
-    "BU"           text,
-    "Month name"   text,
-    "Revenue"      text,
-    "Unit"         text,
-    "Month number" text
+CREATE TABLE IF NOT EXISTS data_rev (
+    "Source.Name"         text,
+    "BU"                  text,
+    "Month Name"          text,
+    "Month Number"        int,
+    "Revenue"             bigint,
+    "Unit"                text,
+    "Report Year"         int,
+    "Report Month Number" int,
+    "Report Month Name"   text,
+    "Is_month_active"     int
 );
-CREATE TABLE data_2026_feb_rev (LIKE data_2026_jan_rev INCLUDING ALL);
-CREATE TABLE data_2026_mar_rev (LIKE data_2026_jan_rev INCLUDING ALL);
+CREATE INDEX IF NOT EXISTS data_rev_source_name_idx ON data_rev ("Source.Name");
 
 -- =========================================================================
--- Data HC tables (one per file)
+-- data_hc — headcount (man-months) by cost center x BU per snapshot
 -- =========================================================================
 
-DROP TABLE IF EXISTS data_2026_jan_hc;
-DROP TABLE IF EXISTS data_2026_feb_hc;
-DROP TABLE IF EXISTS data_2026_mar_hc;
-
-CREATE TABLE data_2026_jan_hc (
-    "Cost center" text,
-    "BU"          text,
-    "MM"          text
+CREATE TABLE IF NOT EXISTS data_hc (
+    "Source.Name"       text,
+    "Cost center"       text,
+    "BU"                text,
+    "MM"                numeric,
+    "Report Year"       int,
+    "Report Month"      int,
+    "Report Month Name" text,
+    "HC Group"          text
 );
-CREATE TABLE data_2026_feb_hc (LIKE data_2026_jan_hc INCLUDING ALL);
-CREATE TABLE data_2026_mar_hc (LIKE data_2026_jan_hc INCLUDING ALL);
+CREATE INDEX IF NOT EXISTS data_hc_source_name_idx ON data_hc ("Source.Name");
